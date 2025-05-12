@@ -5,6 +5,24 @@ st.set_page_config(page_title="Zeke's Vertical Curve App", layout="centered")
 st.title("Zeke’s Vertical Curve App")
 st.caption("“Ten toes down!”")
 
+# Initialize session state defaults
+defaults = {
+    "bvc_station": 0.0,
+    "bvc_elevation": 0.0,
+    "evc_station": 0.0,
+    "evc_elevation": 0.0,
+    "pvi_station": 0.0,
+    "pvi_elevation": 0.0,
+    "g1": 0.0,
+    "g2": 0.0,
+    "k_value": 0.0,
+    "station_input": 0.0
+}
+
+for key, val in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
+
 # Input Mode Selection
 input_mode = st.radio("Choose Input Method:", ("Elevation-Based", "Grade-Based"))
 
@@ -12,29 +30,30 @@ input_mode = st.radio("Choose Input Method:", ("Elevation-Based", "Grade-Based")
 if input_mode == "Elevation-Based":
     st.subheader("Elevation-Based Inputs")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
-    bvc_elevation = st.number_input("BVC Elevation", step=0.01)
+    st.session_state.bvc_station = st.number_input("BVC Station", value=st.session_state.bvc_station, step=1.0, format="%.2f", key="bvc_station")
+    st.session_state.bvc_elevation = st.number_input("BVC Elevation", value=st.session_state.bvc_elevation, step=0.01, key="bvc_elevation")
 
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
-    evc_elevation = st.number_input("EVC Elevation", step=0.01)
+    st.session_state.evc_station = st.number_input("EVC Station", value=st.session_state.evc_station, step=1.0, format="%.2f", key="evc_station")
+    st.session_state.evc_elevation = st.number_input("EVC Elevation", value=st.session_state.evc_elevation, step=0.01, key="evc_elevation")
 
-    pvi_station = st.number_input("PVI Station", value=(bvc_station + evc_station) / 2, step=1.0, format="%.2f")
-    pvi_elevation = st.number_input("PVI Elevation", step=0.01)
+    default_pvi = (st.session_state.bvc_station + st.session_state.evc_station) / 2
+    st.session_state.pvi_station = st.number_input("PVI Station", value=st.session_state.pvi_station or default_pvi, step=1.0, format="%.2f", key="pvi_station")
+    st.session_state.pvi_elevation = st.number_input("PVI Elevation", value=st.session_state.pvi_elevation, step=0.01, key="pvi_elevation")
 
-    curve_length = evc_station - bvc_station
-    g1 = ((pvi_elevation - bvc_elevation) / (pvi_station - bvc_station) * 100) if pvi_station != bvc_station else 0.0
-    g2 = ((evc_elevation - pvi_elevation) / (evc_station - pvi_station) * 100) if evc_station != pvi_station else 0.0
+    curve_length = st.session_state.evc_station - st.session_state.bvc_station
+    g1 = ((st.session_state.pvi_elevation - st.session_state.bvc_elevation) / (st.session_state.pvi_station - st.session_state.bvc_station) * 100) if st.session_state.pvi_station != st.session_state.bvc_station else 0.0
+    g2 = ((st.session_state.evc_elevation - st.session_state.pvi_elevation) / (st.session_state.evc_station - st.session_state.pvi_station) * 100) if st.session_state.evc_station != st.session_state.pvi_station else 0.0
 
 else:
     st.subheader("Grade-Based Inputs")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
-    curve_length = evc_station - bvc_station
+    st.session_state.bvc_station = st.number_input("BVC Station", value=st.session_state.bvc_station, step=1.0, format="%.2f", key="bvc_station")
+    st.session_state.evc_station = st.number_input("EVC Station", value=st.session_state.evc_station, step=1.0, format="%.2f", key="evc_station")
+    curve_length = st.session_state.evc_station - st.session_state.bvc_station
 
-    bvc_elevation = st.number_input("BVC Elevation", step=0.01)
-    g1 = st.number_input("Grade In (g₁) [%]", step=0.01, format="%.2f")
-    g2 = st.number_input("Grade Out (g₂) [%]", step=0.01, format="%.2f")
+    st.session_state.bvc_elevation = st.number_input("BVC Elevation", value=st.session_state.bvc_elevation, step=0.01, key="bvc_elevation")
+    g1 = st.number_input("Grade In (g₁) [%]", value=st.session_state.g1, step=0.01, format="%.2f", key="g1")
+    g2 = st.number_input("Grade Out (g₂) [%]", value=st.session_state.g2, step=0.01, format="%.2f", key="g2")
 
 # Common Calculations
 a_value = g2 - g1
@@ -42,7 +61,7 @@ a_value = g2 - g1
 # Optional K-value
 use_custom_k = st.checkbox("Enter custom K-value?")
 if use_custom_k:
-    k_value = st.number_input("K-value", step=0.01)
+    st.session_state.k_value = st.number_input("K-value", value=st.session_state.k_value, step=0.01, key="k_value")
 else:
     if a_value == 0 or curve_length == 0:
         k_value = "Undefined (check inputs)"
@@ -59,20 +78,20 @@ st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:
 
 # Elevation and Grade at Any Station
 st.subheader("Elevation at Any Station")
-station_input = st.number_input("Enter Station", step=1.0, format="%.2f")
+st.session_state.station_input = st.number_input("Enter Station", value=st.session_state.station_input, step=1.0, format="%.2f", key="station_input")
 
-if bvc_station <= station_input <= evc_station:
-    x = station_input - bvc_station  # horizontal distance from BVC
+if st.session_state.bvc_station <= st.session_state.station_input <= st.session_state.evc_station:
+    x = st.session_state.station_input - st.session_state.bvc_station
     g1_decimal = g1 / 100
 
     if curve_length != 0:
-        elevation = bvc_elevation + g1_decimal * x + (a_value / 100) * x**2 / (2 * curve_length)
+        elevation = st.session_state.bvc_elevation + g1_decimal * x + (a_value / 100) * x**2 / (2 * curve_length)
         grade_at_x = g1 + (a_value * x / curve_length)
     else:
-        elevation = bvc_elevation
+        elevation = st.session_state.bvc_elevation
         grade_at_x = g1
 
-    st.markdown(f"**Elevation at station {station_input:.2f}:** {elevation:.4f} ft")
-    st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
+    st.markdown(f"**Elevation at station {st.session_state.station_input:.2f}:** {elevation:.4f} ft")
+    st.markdown(f"**Grade at station {st.session_state.station_input:.2f}:** {grade_at_x:.4f} %")
 else:
     st.warning("Station is outside the limits of the vertical curve.")
