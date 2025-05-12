@@ -5,7 +5,7 @@ st.set_page_config(page_title="Zeke's Vertical Curve App", layout="centered")
 st.title("Zeke’s Vertical Curve App")
 st.caption("“Ten toes down!”")
 
-# Mode selection
+# Input Mode Selection
 input_mode = st.radio("Choose Input Method:", ("Elevation-Based", "Grade-Based"))
 
 # Elevation-Based Input Mode
@@ -37,32 +37,37 @@ else:
     g1 = st.number_input("Grade In (g₁) [%]", step=0.01, format="%.2f")
     g2 = st.number_input("Grade Out (g₂) [%]", step=0.01, format="%.2f")
 
-# A and optional K
+# Calculated values
 a_value = g2 - g1
+
+# Optional K-value
 use_custom_k = st.checkbox("Enter custom K-value?")
 if use_custom_k:
     k_value = st.number_input("K-value", step=0.01)
 else:
-    k_value = curve_length / abs(a_value) if a_value != 0 else "Undefined"
+    if a_value == 0:
+        k_value = "Undefined (g₁ = g₂)"
+    else:
+        k_value = curve_length / abs(a_value)
 
-# Results Section
+# Results Display
 st.header("Results")
-st.markdown(f"**Curve Length (L):** {curve_length:.2f} ft")
+st.markdown(f"**Curve Length (L):** {curve_length:.4f} ft")
 st.markdown(f"**Grade In (g₁):** {g1:.4f} %")
 st.markdown(f"**Grade Out (g₂):** {g2:.4f} %")
 st.markdown(f"**A = g₂ - g₁:** {a_value:.4f} %")
-st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:.2f}'}")
+st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:.4f}'}")
 
-# Grade & Elevation at any station
+# Elevation & Grade at Any Station
 st.subheader("Elevation at Any Station")
 
 station_input = st.number_input("Enter Station", step=1.0, format="%.2f")
 
 if bvc_station <= station_input <= evc_station:
-    x = station_input - bvc_station  # distance from BVC
+    x = station_input - bvc_station  # horizontal distance from BVC
     g1_decimal = g1 / 100
-    elevation = bvc_elevation + g1_decimal * x + (a_value / 100) * x**2 / (2 * curve_length)
-    grade_at_x = g1 + (a_value * x / curve_length)
+    elevation = bvc_elevation + g1_decimal * x + (a_value / 100) * x**2 / (2 * curve_length) if curve_length != 0 else bvc_elevation
+    grade_at_x = g1 + (a_value * x / curve_length) if curve_length != 0 else g1
 
     st.markdown(f"**Elevation at station {station_input:.2f}:** {elevation:.4f} ft")
     st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
