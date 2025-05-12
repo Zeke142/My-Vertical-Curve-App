@@ -76,4 +76,3 @@ if bvc_station <= station_input <= evc_station:
     st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
 else:
     st.warning("Station is outside the limits of the vertical curve.")
-    
