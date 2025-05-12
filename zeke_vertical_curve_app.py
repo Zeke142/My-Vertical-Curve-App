@@ -1,6 +1,7 @@
 import streamlit as st
 
 st.set_page_config(page_title="Zeke's Vertical Curve App", layout="centered")
+
 st.title("Zeke’s Vertical Curve App")
 st.caption("“Ten toes down!”")
 
@@ -17,16 +18,13 @@ if input_mode == "Elevation-Based":
     evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
     evc_elevation = st.number_input("EVC Elevation", step=0.01)
 
-    # Midpoint as default PVI
-    default_pvi = (bvc_station + evc_station) / 2 if bvc_station and evc_station else 0.0
-    pvi_station = st.number_input("PVI Station", value=default_pvi, step=1.0, format="%.2f")
+    pvi_station = st.number_input("PVI Station", value=(bvc_station + evc_station) / 2, step=1.0, format="%.2f")
     pvi_elevation = st.number_input("PVI Elevation", step=0.01)
 
     curve_length = evc_station - bvc_station
     g1 = ((pvi_elevation - bvc_elevation) / (pvi_station - bvc_station) * 100) if pvi_station != bvc_station else 0.0
     g2 = ((evc_elevation - pvi_elevation) / (evc_station - pvi_station) * 100) if evc_station != pvi_station else 0.0
 
-# Grade-Based Input Mode
 else:
     st.subheader("Grade-Based Inputs")
 
@@ -41,7 +39,7 @@ else:
 # Common Calculations
 a_value = g2 - g1
 
-# K-value
+# Optional K-value
 use_custom_k = st.checkbox("Enter custom K-value?")
 if use_custom_k:
     k_value = st.number_input("K-value", step=0.01)
@@ -51,7 +49,7 @@ else:
     else:
         k_value = curve_length / abs(a_value)
 
-# Results Display
+# Display Summary
 st.header("Results")
 st.markdown(f"**Curve Length (L):** {curve_length:.4f} ft")
 st.markdown(f"**Grade In (g₁):** {g1:.4f} %")
@@ -59,12 +57,12 @@ st.markdown(f"**Grade Out (g₂):** {g2:.4f} %")
 st.markdown(f"**A = g₂ - g₁:** {a_value:.4f} %")
 st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:.4f}'}")
 
-# Elevation & Grade Lookup
+# Elevation and Grade at Any Station
 st.subheader("Elevation at Any Station")
 station_input = st.number_input("Enter Station", step=1.0, format="%.2f")
 
 if bvc_station <= station_input <= evc_station:
-    x = station_input - bvc_station
+    x = station_input - bvc_station  # horizontal distance from BVC
     g1_decimal = g1 / 100
 
     if curve_length != 0:
